@@ -1,4 +1,4 @@
-class News {
+class Product {
   constructor(title, description, price, thumbnail, code, stock) {
     this.title = title;
     this.description = description;
@@ -9,63 +9,89 @@ class News {
   }
 }
 
-class NewsManager {
+class ProductManager {
   constructor() {
-    this.newsList = [];
+    this.products = [];
     this.lastId = 0;
   }
 
-  addNews(title, description, price, thumbnail, code, stock) {
+  addProduct(title, description, price, thumbnail, code, stock) {
     if (!title || !description || !price || !thumbnail || !code || !stock) {
       console.log("Todos los campos son obligatorios");
       return;
     }
 
-    if (this.newsList.some((news) => news.code === code)) {
-      console.log("El código de la noticia ya existe");
+    if (this.products.some((product) => product.code === code)) {
+      console.log("El código del producto ya existe");
       return;
     }
 
-    const news = new News(title, description, price, thumbnail, code, stock);
-    news.id = ++this.lastId;
-    this.newsList.push(news);
-    console.log("Noticia agregada:", news);
+    const product = new Product(
+      title,
+      description,
+      price,
+      thumbnail,
+      code,
+      stock
+    );
+    product.id = ++this.lastId;
+    this.products.push(product);
+    console.log("Producto agregado:", product);
   }
 
-  getNews() {
-    return this.newsList;
+  getProducts() {
+    return this.products;
   }
 
-  getNewsById(id) {
-    const news = this.newsList.find((news) => news.id === id);
-    if (news) {
-      return news;
+  getProductById(id) {
+    const product = this.products.find((product) => product.id === id);
+    if (product) {
+      return product;
     } else {
-      console.log("Noticia no encontrada");
+      console.log("Producto no encontrado");
     }
   }
 }
 
 // Ejemplo de uso
-const newsManager = new NewsManager();
+const productManager = new ProductManager();
 
-newsManager.addNews(
-  "Nueva ley aprobada",
-  "Se aprueba ley de protección al medio ambiente",
-  0,
-  "noticia.jpg",
-  "001",
+// Agregar stickers
+productManager.addProduct(
+  "Sticker de gato",
+  "Sticker de gato con diseño divertido",
+  2.5,
+  "gato.jpg",
+  "STK001",
+  100
+);
+productManager.addProduct(
+  "Sticker de unicornio",
+  "Sticker de unicornio brillante",
+  3.0,
+  "unicornio.jpg",
+  "STK002",
+  80
+);
+
+// Agregar remeras
+productManager.addProduct(
+  "Remera de programación",
+  "Remera negra con diseño de código",
+  15.0,
+  "coder.jpg",
+  "REM001",
   50
 );
-newsManager.addNews(
-  "Inauguración de nueva sede",
-  "La empresa XYZ inaugura su nueva sede en la ciudad",
-  0,
-  "noticia2.jpg",
-  "002",
-  30
+productManager.addProduct(
+  "Remera de gato",
+  "Remera blanca con diseño de gato",
+  12.0,
+  "gato_remera.jpg",
+  "REM002",
+  70
 );
 
-console.log("Todas las noticias:", newsManager.getNews());
-console.log("Noticia con ID 1:", newsManager.getNewsById(1));
-console.log("Noticia con ID 3:", newsManager.getNewsById(3));
+console.log("Todos los productos:", productManager.getProducts());
+console.log("Producto con ID 1:", productManager.getProductById(1));
+console.log("Producto con ID 5:", productManager.getProductById(5)); // No existe
