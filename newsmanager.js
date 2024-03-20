@@ -1,97 +1,90 @@
-class Product {
-  constructor(title, description, price, thumbnail, code, stock) {
-    this.title = title;
-    this.description = description;
-    this.price = price;
-    this.thumbnail = thumbnail;
-    this.code = code;
-    this.stock = stock;
-  }
-}
+const sqlite3 = require("sqlite3").verbose();
 
 class ProductManager {
-  constructor() {
-    this.products = [];
-    this.lastId = 0;
+  constructor(databasePath) {
+    this.db = new sqlite3.Database(databasePath);
+    this.createTable();
   }
 
-  addProduct(title, description, price, thumbnail, code, stock) {
-    if (!title || !description || !price || !thumbnail || !code || !stock) {
-      console.log("Todos los campos son obligatorios");
-      return;
-    }
+  createTable() {
+    this.db.run(`CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            description TEXT,
+            price REAL,
+            thumbnail TEXT,
+            code TEXT,
+            stock INTEGER
+        )`);
+  }
 
-    if (this.products.some((product) => product.code === code)) {
-      console.log("El código del producto ya existe");
-      return;
-    }
-
-    const product = new Product(
-      title,
-      description,
-      price,
-      thumbnail,
-      code,
-      stock
+  addProduct(product) {
+    const { title, description, price, thumbnail, code, stock } = product;
+    this.db.run(
+      `INSERT INTO products (title, description, price, thumbnail, code, stock) VALUES (?, ?, ?, ?, ?, ?)`,
+      [title, description, price, thumbnail, code, stock],
+      function (err) {
+        if (err) {
+          console.error("Error al agregar producto:", err.message);
+        } else {
+          console.log("Producto agregado con ID:", this.lastID);
+        }
+      }
     );
-    product.id = ++this.lastId;
-    this.products.push(product);
-    console.log("Producto agregado:", product);
   }
 
-  getProducts() {
-    return this.products;
+  getProducts(callback) {
+    this.db.all(`SELECT * FROM products`, [], function (err, rows) {
+      if (err) {
+        console.error("Error al obtener productos:", err.message);
+      } else {
+        callback(rows);
+      }
+    });
   }
 
-  getProductById(id) {
-    const product = this.products.find((product) => product.id === id);
-    if (product) {
-      return product;
-    } else {
-      console.log("Producto no encontrado");
-    }
+  getProductById(id, callback) {
+    this.db.get(
+      `SELECT * FROM products WHERE id = ?`,
+      [id],
+      function (err, row) {
+        if (err) {
+          console.error("Error al obtener producto por ID:", err.message);
+        } else {
+          callback(row);
+        }
+      }
+    );
+  }
+
+  updateProduct(id, newData) {
+    const { title, description, price, thumbnail, code, stock } = newData;
+    this.db.run(
+      `UPDATE products SET title = ?, description = ?, price = ?, thumbnail = ?, code = ?, stock = ? WHERE id = ?`,
+      [title, description, price, thumbnail, code, stock, id],
+      function (err) {
+        if (err) {
+          console.error("Error al actualizar producto:", err.message);
+        } else {
+          console.log("Producto actualizado:", id);
+        }
+      }
+    );
+  }
+
+  deleteProduct(id) {
+    this.db.run(`DELETE FROM products WHERE id = ?`, [id], function (err) {
+      if (err) {
+        console.error("Error al eliminar producto:", err.message);
+      } else {
+        console.log("Producto eliminado:", id);
+      }
+    });
+  }
+
+  close() {
+    this.db.close();
   }
 }
 
-// Ejemplo de uso
-const productManager = new ProductManager();
-
-// Agregar stickers
-productManager.addProduct(
-  "Sticker de gato",
-  "Sticker de gato con diseño divertido",
-  2.5,
-  "gato.jpg",
-  "STK001",
-  100
-);
-productManager.addProduct(
-  "Sticker de unicornio",
-  "Sticker de unicornio brillante",
-  3.0,
-  "unicornio.jpg",
-  "STK002",
-  80
-);
-
-// Agregar remeras
-productManager.addProduct(
-  "Remera de programación",
-  "Remera negra con diseño de código",
-  15.0,
-  "coder.jpg",
-  "REM001",
-  50
-);
-productManager.addProduct(
-  "Remera de gato",
-  "Remera blanca con diseño de gato",
-  12.0,
-  "gato_remera.jpg",
-  "REM002",
-  70
-);
-
-console.log("Todos los productos:", productManager.getProducts());
-console.log("Producto con ID 1:", productManager.getProductById(1));
-console.log("Producto con ID 5:", productManager.getProductById(5)); // No existe
+module.exports = ProductManager;
