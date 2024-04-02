@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "title": "Kia",
+    "description": "Automóvil Kia",
+    "code": "KIA001",
+    "price": 20000,
+    "status": true,
+    "stock": 10,
+    "category": "Automóviles",
+    "thumbnails": ["/images/kia_thumbnail1.jpg", "/images/kia_thumbnail2.jpg"]
+  },
+  {
+    "id": 2,
+    "title": "Nissan",
+    "description": "Automóvil Nissan",
+    "code": "NIS001",
+    "price": 18000,
+    "status": true,
+    "stock": 15,
+    "category": "Automóviles",
+    "thumbnails": [
+      "/images/nissan_thumbnail1.jpg",
+      "/images/nissan_thumbnail2.jpg"
+    ]
+  }
+]

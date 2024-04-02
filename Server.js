@@ -1,56 +1,65 @@
+// Server.js
 const express = require("express");
 const ProductManager = require("./ProductManager");
+const path = require("path");
 
 const app = express();
-const productManager = new ProductManager("products.db");
+const PORT = 8080;
+const productsFilePath = path.join(__dirname, "productos.json");
+const productManager = new ProductManager(productsFilePath);
 
-// Endpoint para obtener todos los productos
-app.get("/products", async (req, res) => {
+app.use(express.json());
+
+app.get("/api/products", async (req, res) => {
   try {
-    const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
-    const products = await new Promise((resolve, reject) => {
-      productManager.getProducts((err, products) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(products);
-        }
-      });
-    });
-    if (limit) {
-      res.json(products.slice(0, limit));
-    } else {
-      res.json(products);
-    }
+    const products = await productManager.getProducts();
+    res.json(products);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Endpoint para obtener un producto por su ID
-app.get("/products/:pid", async (req, res) => {
+app.get("/api/products/:productId", async (req, res) => {
+  const productId = parseInt(req.params.productId);
   try {
-    const productId = parseInt(req.params.pid);
-    const product = await new Promise((resolve, reject) => {
-      productManager.getProductById(productId, (err, product) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(product);
-        }
-      });
-    });
-    if (product) {
-      res.json(product);
-    } else {
-      res.status(404).json({ message: "Producto no encontrado" });
-    }
+    const product = await productManager.getProductById(productId);
+    res.json(product);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+});
+
+app.post("/api/products", async (req, res) => {
+  const newProduct = req.body;
+  try {
+    await productManager.addProduct(newProduct);
+    res.status(201).json({ message: "Producto agregado correctamente." });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-const PORT = process.env.PORT || 3000;
+app.put("/api/products/:productId", async (req, res) => {
+  const productId = parseInt(req.params.productId);
+  const updatedProduct = req.body;
+  try {
+    await productManager.updateProduct(productId, updatedProduct);
+    res.json({ message: "Producto actualizado correctamente." });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete("/api/products/:productId", async (req, res) => {
+  const productId = parseInt(req.params.productId);
+  try {
+    await productManager.deleteProduct(productId);
+    res.json({ message: "Producto eliminado correctamente." });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.listen(PORT, () => {
-  console.log(`Servidor Express escuchando en el puerto ${PORT}`);
+  console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
