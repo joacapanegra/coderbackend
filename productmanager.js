@@ -1,4 +1,3 @@
-// ProductManager.js
 const sqlite3 = require("sqlite3").verbose();
 
 class ProductManager {
@@ -21,65 +20,75 @@ class ProductManager {
 
   addProduct(product) {
     const { title, description, price, thumbnail, code, stock } = product;
-    this.db.run(
-      `INSERT INTO products (title, description, price, thumbnail, code, stock) VALUES (?, ?, ?, ?, ?, ?)`,
-      [title, description, price, thumbnail, code, stock],
-      function (err) {
-        if (err) {
-          console.error("Error al agregar producto:", err.message);
-        } else {
-          console.log("Producto agregado con ID:", this.lastID);
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        `INSERT INTO products (title, description, price, thumbnail, code, stock) VALUES (?, ?, ?, ?, ?, ?)`,
+        [title, description, price, thumbnail, code, stock],
+        function (err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve({ id: this.lastID, ...product });
+          }
         }
-      }
-    );
-  }
-
-  getProducts(callback) {
-    this.db.all(`SELECT * FROM products`, [], function (err, rows) {
-      if (err) {
-        console.error("Error al obtener productos:", err.message);
-      } else {
-        callback(rows);
-      }
+      );
     });
   }
 
-  getProductById(id, callback) {
-    this.db.get(
-      `SELECT * FROM products WHERE id = ?`,
-      [id],
-      function (err, row) {
+  getAllProducts() {
+    return new Promise((resolve, reject) => {
+      this.db.all(`SELECT * FROM products`, [], function (err, rows) {
         if (err) {
-          console.error("Error al obtener producto por ID:", err.message);
+          reject(err);
         } else {
-          callback(row);
+          resolve(rows);
         }
-      }
-    );
+      });
+    });
+  }
+
+  getProductById(id) {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        `SELECT * FROM products WHERE id = ?`,
+        [id],
+        function (err, row) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(row);
+          }
+        }
+      );
+    });
   }
 
   updateProduct(id, newData) {
     const { title, description, price, thumbnail, code, stock } = newData;
-    this.db.run(
-      `UPDATE products SET title = ?, description = ?, price = ?, thumbnail = ?, code = ?, stock = ? WHERE id = ?`,
-      [title, description, price, thumbnail, code, stock, id],
-      function (err) {
-        if (err) {
-          console.error("Error al actualizar producto:", err.message);
-        } else {
-          console.log("Producto actualizado:", id);
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        `UPDATE products SET title = ?, description = ?, price = ?, thumbnail = ?, code = ?, stock = ? WHERE id = ?`,
+        [title, description, price, thumbnail, code, stock, id],
+        function (err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve({ id, ...newData });
+          }
         }
-      }
-    );
+      );
+    });
   }
 
   deleteProduct(id) {
-    this.db.run(`DELETE FROM products WHERE id = ?`, [id], function (err) {
-      if (err) {
-        console.error("Error al eliminar producto:", err.message);
-      } else {
-        console.log("Producto eliminado:", id);
-      }
+    return new Promise((resolve, reject) => {
+      this.db.run(`DELETE FROM products WHERE id = ?`, [id], function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
     });
   }
 
