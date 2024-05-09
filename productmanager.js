@@ -1,99 +1,92 @@
-const sqlite3 = require("sqlite3").verbose();
+const mongoose = require("mongoose");
+
+const productSchema = new mongoose.Schema({
+  title: String,
+  description: String,
+  price: Number,
+  thumbnail: String,
+  code: String,
+  stock: Number,
+});
+
+const Product = mongoose.model("Product", productSchema);
 
 class ProductManager {
-  constructor(databasePath) {
-    this.db = new sqlite3.Database(databasePath);
-    this.createTable();
+  async addProduct(product) {
+    try {
+      const newProduct = new Product(product);
+      await newProduct.save();
+      return newProduct.toObject(); // Convertir a objeto plano
+    } catch (error) {
+      throw error;
+    }
   }
 
-  createTable() {
-    this.db.run(`CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT,
-            description TEXT,
-            price REAL,
-            thumbnail TEXT,
-            code TEXT,
-            stock INTEGER
-        )`);
+  async getAllProducts({ limit = 10, page = 1, sort, query }) {
+    const skip = (page - 1) * limit;
+    const filter = query ? { category: query } : {};
+    const sortOptions = sort ? { price: sort === "asc" ? 1 : -1 } : {};
+
+    try {
+      const products = await Product.find(filter)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(parseInt(limit));
+
+      const totalProducts = await Product.countDocuments(filter);
+      const totalPages = Math.ceil(totalProducts / limit);
+      const hasNextPage = page < totalPages;
+      const hasPrevPage = page > 1;
+      const prevLink = hasPrevPage
+        ? `/api/products?limit=${limit}&page=${page - 1}`
+        : null;
+      const nextLink = hasNextPage
+        ? `/api/products?limit=${limit}&page=${page + 1}`
+        : null;
+
+      return {
+        status: "success",
+        payload: products,
+        totalPages,
+        prevPage: page - 1,
+        nextPage: page + 1,
+        page,
+        hasPrevPage,
+        hasNextPage,
+        prevLink,
+        nextLink,
+      };
+    } catch (error) {
+      throw error;
+    }
   }
 
-  addProduct(product) {
-    const { title, description, price, thumbnail, code, stock } = product;
-    return new Promise((resolve, reject) => {
-      this.db.run(
-        `INSERT INTO products (title, description, price, thumbnail, code, stock) VALUES (?, ?, ?, ?, ?, ?)`,
-        [title, description, price, thumbnail, code, stock],
-        function (err) {
-          if (err) {
-            reject(err);
-          } else {
-            resolve({ id: this.lastID, ...product });
-          }
-        }
-      );
-    });
+  async getProductById(id) {
+    try {
+      const product = await Product.findById(id);
+      return product ? product.toObject() : null;
+    } catch (error) {
+      throw error;
+    }
   }
 
-  getAllProducts() {
-    return new Promise((resolve, reject) => {
-      this.db.all(`SELECT * FROM products`, [], function (err, rows) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows);
-        }
+  async updateProduct(id, newData) {
+    try {
+      const updatedProduct = await Product.findByIdAndUpdate(id, newData, {
+        new: true,
       });
-    });
+      return updatedProduct ? updatedProduct.toObject() : null;
+    } catch (error) {
+      throw error;
+    }
   }
 
-  getProductById(id) {
-    return new Promise((resolve, reject) => {
-      this.db.get(
-        `SELECT * FROM products WHERE id = ?`,
-        [id],
-        function (err, row) {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(row);
-          }
-        }
-      );
-    });
-  }
-
-  updateProduct(id, newData) {
-    const { title, description, price, thumbnail, code, stock } = newData;
-    return new Promise((resolve, reject) => {
-      this.db.run(
-        `UPDATE products SET title = ?, description = ?, price = ?, thumbnail = ?, code = ?, stock = ? WHERE id = ?`,
-        [title, description, price, thumbnail, code, stock, id],
-        function (err) {
-          if (err) {
-            reject(err);
-          } else {
-            resolve({ id, ...newData });
-          }
-        }
-      );
-    });
-  }
-
-  deleteProduct(id) {
-    return new Promise((resolve, reject) => {
-      this.db.run(`DELETE FROM products WHERE id = ?`, [id], function (err) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
-  }
-
-  close() {
-    this.db.close();
+  async deleteProduct(id) {
+    try {
+      await Product.findByIdAndDelete(id);
+    } catch (error) {
+      throw error;
+    }
   }
 }
 
