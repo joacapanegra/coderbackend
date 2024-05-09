@@ -16,7 +16,7 @@ class ProductManager {
     try {
       const newProduct = new Product(product);
       await newProduct.save();
-      return newProduct.toObject(); // Convertir a objeto plano
+      return newProduct.toObject();
     } catch (error) {
       throw error;
     }

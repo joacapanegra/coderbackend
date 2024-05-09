@@ -36,8 +36,6 @@ app.get("/api/products", async (req, res) => {
   }
 });
 
-// Otros endpoints para CRUD de productos...
-
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
